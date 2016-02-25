@@ -1,0 +1,45 @@
+# E-step
+
+# author: Xin Wang, xinwangmath@gmail.com
+
+# Consists of a single function findGamma, which returns two things: the \gamma{i k} matrix and the log-likelihood
+# input: X: the data matrix
+#        Pi: a vector whose components are \pi_k, i.e. Pi = (\pi_1, ..., \pi_10)
+#        Mu: a vector whose components are \mu_k s
+#        SigmaList: a list of two matrices: SigmaList[[1]] is a matrix of dimension D \times (K*D), the first D columns 
+#                     form Sigma_1, (k-1) * D + 1 to k*D columns form Sigma_k; SigmaList[[2]] is a matrix of dimension 
+#                     D \times (K*D), formed by columns of inverse of Sigma_k s
+# output: a list GammaLogPList: GammaLogPList[[1]] is the \gamma_{i k} matrix, and GammaLogPList[[1]] is the log-likelihood 
+
+source('mydmvnorm.R')
+
+findGamma = function(X, Pi, Mu, SigmaList, K){
+
+	X = t(X)
+	D = dim(X)[1]
+	N = dim(X)[2]
+
+	Gamma = matrix(, nrow = N, ncol = K)
+
+	piDensity = Gamma[, 1]
+	for(k in 1:K){
+		SigmaKthList = list(SigmaList[[1]][, ((k-1)*D+1):(k*D)], SigmaList[[2]][, ((k-1)*D+1):(k*D)])
+		for(i in 1:N){
+			piDensity[i] = Pi[k] * mydmvnorm(X[, i], Mu[, k], SigmaKthList)
+		}
+
+		Gamma[, k] = piDensity
+	}
+
+	logP = sum(log(rowSums(Gamma)))
+
+	for(i in 1:N){
+		Gamma[i, ] = (1/ sum(Gamma[i, ])) * Gamma[i, ]
+	}
+
+	GammaLogPList = list(Gamma, logP)
+
+	return(GammaLogPList)
+
+}
+
